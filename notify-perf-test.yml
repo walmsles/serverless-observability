@@ -8,8 +8,8 @@ config:
       arrivalRate: 5
       rampTo: 50
       name: Ramp up load
-    - duration: 600
-      arrivalRate: 50
+    - duration: 1800
+      arrivalRate: 10
       name: Sustained load
 
 scenarios:
