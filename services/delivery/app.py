@@ -1,0 +1,87 @@
+from typing import Any, Dict
+
+import requests
+from aws_lambda_powertools.logging import Logger
+from aws_lambda_powertools.utilities import parameters
+from aws_lambda_powertools.utilities.data_classes import EventBridgeEvent, event_source
+from aws_lambda_powertools.utilities.typing import LambdaContext
+from botocore.config import Config
+from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
+
+logger = Logger(service="delivery")
+config = Config(
+    region_name="ap-southeast-2",
+    connect_timeout=1,
+    retries={"total_max_attempts": 2, "max_attempts": 5},
+)
+ssm_provider = parameters.SecretsProvider(config=config)
+
+
+# retry up to 5 times and wait 3 seconds + random time from 0 to 5 seconds (jitter)
+@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_fixed(3) + wait_random(0, 5))
+def try_api_delivery(
+    endpoint: str, api_key: str, correlation_id: str, body: Dict[str, Any]
+) -> str:
+    # do stuff
+    logger.info("trying API delivery")
+    http_headers: Dict[str, str] = {
+        "x-api-key": api_key,
+        "x-correlation-id": correlation_id,
+    }
+
+    response = requests.post(url=endpoint, json=body, headers=http_headers)
+
+    # Log the status code
+    logger.info({"http_status": response.status_code})
+
+    # raise exception to enable tenacity retry
+    response.raise_for_status()
+
+    return response.json()
+
+
+@logger.inject_lambda_context(
+    log_event=True, correlation_id_path="detail.meta_data.correlation_id"
+)
+@event_source(data_class=EventBridgeEvent)
+def handler(event: EventBridgeEvent, context: LambdaContext):
+    logger.info("Processing Delivery Notification")
+
+    api_body: Dict[str, Any] = event.detail
+
+    correlation_id: str = event.detail.get("meta_data", {}).get(
+        "correlation_id", "undefined"
+    )
+    logger.info(correlation_id)
+
+    # remove meta_data from the API body
+    del api_body["meta_data"]
+
+    # read endpoint and API key
+    try:
+        # read endpoint and API Key
+        endpoint: str = parameters.get_parameter("/sls-observe/delivery/endpoint")
+        api_key: str = ssm_provider.get("/sls-observe/delivery/api-key")
+
+        # robustly try and retry API Delivery (uses tenacity retry)
+        response = try_api_delivery(endpoint, api_key, correlation_id, event.detail)
+
+        logger.info(response)
+        logger.info(
+            {
+                "delivery_state": "COMPLETE",
+                "response": response,
+            }
+        )
+    except requests.HTTPError as error:
+        logger.error(
+            {
+                "delivery_state": "FAILED",
+                "response": str(error),
+            }
+        )
+        raise error
+
+    except parameters.exceptions.GetParameterError as error:
+        logger.error("Parameter retrival failed", exc_info=error)
+        raise error

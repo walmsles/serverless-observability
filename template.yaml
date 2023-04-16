@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 29
+    MemorySize: 1024
+    Tracing: Active
+    Runtime: python3.8
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+  Api:
+    TracingEnabled: true
+Description: |
+  serverless-observability
+  Sample SAM Template for serverless-observability
+
+Resources:
+  NotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./services/notification
+      Handler: app.handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          EVENTBUS_NAME: !Ref EventBus
+      Events:
+        Notify:
+          Type: Api
+          Properties:
+            Path: /notify
+            Method: post
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: NotificationFunction
+      Tracing: Active
+      Policies:
+        - EventBridgePutEventsPolicy:
+            EventBusName: !Ref EventBus
+
+  DeliveryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./services/delivery
+      Handler: app.handler
+      Runtime: python3.9
+      Events:
+        NotifyRule:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: !Ref EventBus
+            Pattern:
+              account:
+                - !Sub ${AWS::AccountId}
+              detail-type:
+                - order-notify
+      Policies:
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref DeliveryApiKeySecret
+        - SSMParameterWithSlashPrefixReadPolicy:
+            ParameterName: /sls-observe/delivery/endpoint
+
+        # Queue:
+        #   Type: SQS
+        #   Properties:
+        #     Queue: !GetAtt DeliveryQueue.Arn
+        #     BatchSize: 10
+        #     ScalingConfig:
+        #       MaximumConcurrency: 3
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: NotificationFunction
+      Tracing: Active
+
+  DeliveryApiParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /sls-observe/delivery/endpoint
+      Type: String
+      Value: place-holder
+
+  DeliveryApiKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: /sls-observe/delivery/api-key
+      SecretString: api-key-placeholder
+
+  EventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: !Sub ${AWS::StackName}-events
+
+  TheApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Auth:
+        ApiKeyRequired: True
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          Throttle:
+            BurstLimit: 5
+            RateLimit: 10
+
+  SlowFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./services/slow_api
+      Handler: app.handler
+      Runtime: python3.9
+      Events:
+        SlowApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref TheApi
+            Path: /slow
+            Method: post
+            Auth:
+              ApiKeyRequired: True
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: NotificationFunction
+      Tracing: Active
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !Join
+        - ''
+        - - ApplicationInsights-SAM-
+          - !Ref AWS::StackName
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Join
+        - ''
+        - - ApplicationInsights-SAM-
+          - !Ref AWS::StackName
+      AutoConfigurationEnabled: 'true'
+    DependsOn: ApplicationResourceGroup
+
+Outputs:
+  NotificationApi:
+    Description: API Gateway endpoint URL for Prod stage for Notification function
+    Value: !Sub >-
+      https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/notify/
+  NotificationFunction:
+    Description: Notification Lambda Function ARN
+    Value: !GetAtt NotificationFunction.Arn
+  NotificationFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt NotificationFunctionRole.Arn
