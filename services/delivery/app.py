@@ -8,7 +8,7 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.config import Config
 from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
 
-logger = Logger(service="delivery")
+logger = Logger(service="delivery-handler")
 config = Config(
     region_name="ap-southeast-2",
     connect_timeout=1,
@@ -36,7 +36,6 @@ def try_api_delivery(
 
     # raise exception to enable tenacity retry
     response.raise_for_status()
-
     return response.json()
 
 
@@ -69,19 +68,19 @@ def handler(event: EventBridgeEvent, context: LambdaContext):
         logger.info(response)
         logger.info(
             {
-                "delivery_state": "COMPLETE",
+                "status": "COMPLETE",
                 "response": response,
             }
         )
     except requests.HTTPError as error:
         logger.error(
             {
-                "delivery_state": "FAILED",
+                "status": "FAILED",
                 "response": str(error),
             }
         )
         raise error
 
     except parameters.exceptions.GetParameterError as error:
-        logger.error("Parameter retrival failed", exc_info=error)
+        logger.error("Parameter retrieval failed", exc_info=error)
         raise error

@@ -32,12 +32,13 @@ def slowHandler():
         if random_fail > 80:
             raise Exception("random process failure")
 
-        logger.info("Processing COMPLETE")
+        logger.info({"status": "COMPLETE"})
 
         return {"correlation_id": correlation_id, "message": "processed"}
 
     except Exception as error:
-        logger.error(f"Processing FAILED: {str(error)}", exc_info=error)
+        logger.error(f"error: {str(error)}", exc_info=error)
+        logger.info({"status": "FAILED"})
         raise error
 
 

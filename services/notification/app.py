@@ -9,7 +9,7 @@ from aws_lambda_powertools.utilities.data_classes import (
 )
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
-logger = Logger()
+logger = Logger(service="notify-handler")
 client = boto3.client("events")
 EVENTBUS_NAME = os.environ.get("EVENTBUS_NAME", "")
 
@@ -21,11 +21,12 @@ EVENTBUS_NAME = os.environ.get("EVENTBUS_NAME", "")
 def handler(event: APIGatewayProxyEvent, context: LambdaContext):
     logger.info("Processing Order Notification")
     request_id = ""
-
+    correlation_id = event.request_context.request_id
     body = event.json_body
-    body["meta_data"] = {"correlation_id": event.request_context.request_id}
+    body["meta_data"] = {"correlation_id": correlation_id}
 
     try:
+        logger.info("submit event to EventBus")
         # Send API Event to EventBridge
         response = client.put_events(
             Entries=[
@@ -46,16 +47,18 @@ def handler(event: APIGatewayProxyEvent, context: LambdaContext):
         if response["FailedEntryCount"] > 0:
             raise Exception("Error sending to EventBus")
 
+        logger.info({"status": "COMPLETE"})
         return {
             "statusCode": 200,
             "body": json.dumps(
                 {
                     "request_id": request_id,
+                    "correlation_id": correlation_id,
                 }
             ),
         }
     except Exception as e:
-        logger.error("Exception Raised", exc_info=e, stack_info=True)
+        logger.error({"status": "FAILED"}, exc_info=e, stack_info=True)
         return {
             "statusCode": 400,
             "body": json.dumps({"request_id": request_id, "error": str(e)}),
