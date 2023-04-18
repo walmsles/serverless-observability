@@ -18,13 +18,11 @@ def slowHandler():
         )
         logger.set_correlation_id(correlation_id)
 
-        # Get the POST body
-        body: str = app.current_event.json_body
+        logger.info({"status": "START", "message": "Slow processing..."})
 
         # Process the Data
         timeout: int = random.randint(1, 10)
-        logger.info(f"slow response, waiting {timeout} seconds")
-        logger.info(body)
+        logger.info({"message": f"slow response, waiting {timeout} seconds"})
         time.sleep(timeout)
 
         # randomly raise an Exception to fail the process 20% of the time
@@ -38,7 +36,7 @@ def slowHandler():
 
     except Exception as error:
         logger.error(f"error: {str(error)}", exc_info=error)
-        logger.info({"status": "FAILED"})
+        logger.info({"status": "FAILED", "message": str(error)})
         raise error
 
 

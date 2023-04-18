@@ -19,7 +19,7 @@ EVENTBUS_NAME = os.environ.get("EVENTBUS_NAME", "")
 )
 @event_source(data_class=APIGatewayProxyEvent)
 def handler(event: APIGatewayProxyEvent, context: LambdaContext):
-    logger.info("Processing Order Notification")
+    logger.info({"status": "START", "message": "Processing Order Notification"})
     request_id = ""
     correlation_id = event.request_context.request_id
     body = event.json_body

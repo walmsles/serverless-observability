@@ -32,7 +32,7 @@ def try_api_delivery(
     response = requests.post(url=endpoint, json=body, headers=http_headers)
 
     # Log the status code
-    logger.info({"http_status": response.status_code})
+    logger.info({"message": response.status_code})
 
     # raise exception to enable tenacity retry
     response.raise_for_status()
@@ -44,14 +44,13 @@ def try_api_delivery(
 )
 @event_source(data_class=EventBridgeEvent)
 def handler(event: EventBridgeEvent, context: LambdaContext):
-    logger.info("Processing Delivery Notification")
+    logger.info({"status": "START", "message": "Processing Delivery Notification"})
 
     api_body: Dict[str, Any] = event.detail
 
     correlation_id: str = event.detail.get("meta_data", {}).get(
         "correlation_id", "undefined"
     )
-    logger.info(correlation_id)
 
     # remove meta_data from the API body
     del api_body["meta_data"]
@@ -69,14 +68,14 @@ def handler(event: EventBridgeEvent, context: LambdaContext):
         logger.info(
             {
                 "status": "COMPLETE",
-                "response": response,
+                "message": response,
             }
         )
     except requests.HTTPError as error:
         logger.error(
             {
                 "status": "FAILED",
-                "response": str(error),
+                "message": str(error),
             }
         )
         raise error
