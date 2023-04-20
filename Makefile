@@ -8,27 +8,11 @@ e2e_tests = $(tests_src)/e2e
 int_tests = $(tests_src)/integration
 all_src = $(service_src)
 
-.PHONY: target
-target:
-	@$(MAKE) pr
-
 .PHONY: dev
 dev:
 	pip install --upgrade pip pre-commit poetry
 	poetry install
 	pre-commit install
-
-.PHONY: tests
-tests:
-	poetry run pytest --ignore $(e2e_tests) --ignore $(int_tests) --cov=$(project) --cov-report=xml --cov-report term
-
-.PHONY: tests/integration
-tests/integration: tests deps
-	poetry run pytest $(int_tests) --cov=$(project) --cov-report=xml --cov-report term
-
-.PHONY: tests/e2e
-tests/e2e: tests deps
-	poetry run pytest $(e2e_tests) --cov=$(project) --cov-report=xml --cov-report term
 
 .PHONY: format
 format:
@@ -42,9 +26,6 @@ lint: format
 .PHONY: pre-commit
 pre-commit:
 	pre-commit run --show-diff-on-failure
-
-.PHONY: pr
-pr: lint mypy pre-commit test
 
 .PHONY: synth
 build: deps
