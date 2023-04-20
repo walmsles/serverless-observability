@@ -18,7 +18,7 @@ ssm_provider = parameters.SecretsProvider(config=config)
 
 
 # retry up to 5 times and wait 3 seconds + random time from 0 to 5 seconds (jitter)
-@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_fixed(3) + wait_random(0, 5))
+@retry(wait=wait_fixed(3) + wait_random(0, 5), stop=stop_after_attempt(5), reraise=True)
 def try_api_delivery(
     endpoint: str, api_key: str, correlation_id: str, body: Dict[str, Any]
 ) -> str:

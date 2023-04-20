@@ -1,15 +1,16 @@
 config:
-  target: "https://yndezogjx7.execute-api.ap-southeast-2.amazonaws.com/Prod"
+  target: "https://lb360um8xe.execute-api.ap-southeast-2.amazonaws.com/Prod"
   phases:
     - duration: 60
-      arrivalRate: 5
+      arrivalRate: 2
       name: Warm up
     - duration: 120
-      arrivalRate: 5
-      rampTo: 50
+      arrivalRate: 3
+      rampTo: 5
       name: Ramp up load
     - duration: 1800
-      arrivalRate: 10
+      arrivalRate: 4
+      rampTo: 15
       name: Sustained load
 
 scenarios:
