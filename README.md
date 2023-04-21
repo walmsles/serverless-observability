@@ -71,4 +71,4 @@ Once the stack is deployed and initial manual configuration is completed the per
 
 ### AWS BILL WARNING !!!
 
-The performance test will run over 33 minutes and will cause your AWS account to accrue charges of approximately $10.00 USD for each performance run.
+The performance test will run over 33 minutes and may cause your AWS account to accrue charges but is unlikely.  The expected lambda invocation count is approx. 17,000.
