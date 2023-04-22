@@ -17,6 +17,16 @@ There are 3 components to this project:
    1. 20% of the API Calls will fail immediately.
    2. The API will take between 0 and 2 seconds to return a response when it runs successfully.
 
+The **SlowApi** lambda is triggered by an API Gateway route which has an API Key and usage plan set to restrict the number of transactions through it to 10 transactions per second: BurstLimit = 10, RateLimit = 10.
+The **NotificationHandler** is also triggered by an API Gateway that has no API Key and no rate limiting.
+
+There is a configured artillery test file that can be used to run a performance test with the following characteristics:
+
+- For 1 minute test will hit the Notification API at approx. 2 transactions per second
+- For the next 2 minutes transactions will ramp up to 5 transactions per second
+- For the next 10 minutes transactions will ramp from 4 per second to 15 per second and then remain at this level which is a level that exceeds the SlowAPI transaction limit.
+
+
 ### Project Dependencies
 
 This project uses the following open source tools and requires them to be installed and working in your environment:
