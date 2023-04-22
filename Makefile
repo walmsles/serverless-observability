@@ -51,5 +51,4 @@ deps:
 clean:
 	rm -rf .vscode .pytest_cache .coverage coverage.xml .mypy_cache
 	find services -type f -name "requirements.txt" -delete
-	find services tests -type d -name "__pycache__" -exec rm -rf {} \;
 	poetry env remove --all

@@ -1,13 +1,20 @@
+import json
 from typing import Any, Dict
 
 import requests
 from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities import parameters
-from aws_lambda_powertools.utilities.data_classes import EventBridgeEvent, event_source
+from aws_lambda_powertools.utilities.batch import (
+    BatchProcessor,
+    EventType,
+    process_partial_response,
+)
+from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSRecord
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.config import Config
 from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
 
+processor = BatchProcessor(event_type=EventType.SQS)
 logger = Logger(service="delivery-handler")
 config = Config(
     region_name="ap-southeast-2",
@@ -39,16 +46,12 @@ def try_api_delivery(
     return response.json()
 
 
-@logger.inject_lambda_context(
-    log_event=True, correlation_id_path="detail.meta_data.correlation_id"
-)
-@event_source(data_class=EventBridgeEvent)
-def handler(event: EventBridgeEvent, context: LambdaContext):
+def record_handler(record: SQSRecord):
     logger.info({"status": "START", "message": "Processing Delivery Notification"})
 
-    api_body: Dict[str, Any] = event.detail
+    api_body: Dict[str, Any] = json.loads(record.body).get("detail", {})
 
-    correlation_id: str = event.detail.get("meta_data", {}).get(
+    correlation_id: str = api_body.get("meta_data", {}).get(
         "correlation_id", "undefined"
     )
 
@@ -62,7 +65,7 @@ def handler(event: EventBridgeEvent, context: LambdaContext):
         api_key: str = ssm_provider.get("/sls-observe/delivery/api-key")
 
         # robustly try and retry API Delivery (uses tenacity retry)
-        response = try_api_delivery(endpoint, api_key, correlation_id, event.detail)
+        response = try_api_delivery(endpoint, api_key, correlation_id, api_body)
 
         logger.info(response)
         logger.info(
@@ -83,3 +86,13 @@ def handler(event: EventBridgeEvent, context: LambdaContext):
     except parameters.exceptions.GetParameterError as error:
         logger.error("Parameter retrieval failed", exc_info=error)
         raise error
+
+
+# Lambda handler
+@logger.inject_lambda_context(
+    log_event=True, correlation_id_path="detail.meta_data.correlation_id"
+)
+def handler(event, context: LambdaContext):
+    return process_partial_response(
+        event=event, record_handler=record_handler, processor=processor, context=context
+    )

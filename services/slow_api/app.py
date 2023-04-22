@@ -21,7 +21,7 @@ def slowHandler():
         logger.info({"status": "START", "message": "Slow processing..."})
 
         # Process the Data
-        timeout: int = random.randint(1, 10)
+        timeout: int = random.randint(0, 2)
         logger.info({"message": f"slow response, waiting {timeout} seconds"})
         time.sleep(timeout)
 
