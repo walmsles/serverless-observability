@@ -30,7 +30,7 @@ There is a configured artillery test file that can be used to run a performance 
 
 The project has 3 branches as follows:
 
-1. **[main]()** - This is the same as the **no-flow-control** branch.
+1. **[main](https://github.com/walmsles/serverless-observability)** - This is the same as the **no-flow-control** branch.
 2. **[no-flow-control](https://github.com/walmsles/serverless-observability/tree/no-flow-control)** - This is the architecture with **No Flow Control** built in.  It is an uncontrolled scale flowing into a limited-scale API to highlight what happens when scalability boundary clashes occur.
 3. **[flow-control](https://github.com/walmsles/serverless-observability/tree/flow-control)** - Same architecture but has an SQS Queue introduced between EventBridge and the Delivery Lambda with an Event Source Mapping configuration to limit the scale of the Delivery Lambda to a maximum concurrency of 10.  The Lambda receives individual messages from the SQS Queue.
 
