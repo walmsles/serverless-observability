@@ -26,6 +26,13 @@ There is a configured artillery test file that can be used to run a performance 
 - For the next 2 minutes transactions will ramp up to 5 transactions per second
 - For the next 10 minutes transactions will ramp from 4 per second to 15 per second and then remain at this level which is a level that exceeds the SlowAPI transaction limit.
 
+### Project Branches
+
+The project has 3 branches as follows:
+
+1. **main** - This is the same as the **no-flow-control** branch.
+**no-flow-control** - This is the architecture with **No Flow Control** built in.  It is an uncontrolled scale flowing into a limited-scale API to highlight what happens when scalability boundary clashes occur.
+3. **flow-control** - Same architecture but has an SQS Queue introduced between EventBridge and the Delivery Lambda with an Event Source Mapping configuration to limit the scale of the Delivery Lambda to a maximum concurrency of 10.  The Lambda receives individual messages from the SQS Queue.
 
 ### Project Dependencies
 
@@ -88,6 +95,6 @@ This project includes a **package.json** file that will install **artillery** as
 
 Once the stack is deployed and the initial manual configuration is completed the performance test can be executed using **npx artillery run notify-perf-test.yml**.
 
-### AWS BILL WARNING !!!
+### AWS BILL WARNING
 
 The performance test will run over 18 minutes and may cause your AWS account to accrue charges, this is unlikely but please be aware running performance tests with AWS Lambda may cost $$$.
