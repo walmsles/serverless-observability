@@ -47,13 +47,13 @@ def try_api_delivery(
 
 
 def record_handler(record: SQSRecord):
-    logger.info({"status": "START", "message": "Processing Delivery Notification"})
-
     api_body: Dict[str, Any] = json.loads(record.body).get("detail", {})
-
     correlation_id: str = api_body.get("meta_data", {}).get(
         "correlation_id", "undefined"
     )
+
+    logger.set_correlation_id(correlation_id)
+    logger.info({"status": "START", "message": "Processing Delivery Notification"})
 
     # remove meta_data from the API body
     del api_body["meta_data"]
@@ -89,9 +89,7 @@ def record_handler(record: SQSRecord):
 
 
 # Lambda handler
-@logger.inject_lambda_context(
-    log_event=True, correlation_id_path="detail.meta_data.correlation_id"
-)
+@logger.inject_lambda_context(log_event=True)
 def handler(event, context: LambdaContext):
     return process_partial_response(
         event=event, record_handler=record_handler, processor=processor, context=context
