@@ -102,7 +102,7 @@ Resources:
         UsagePlan:
           CreateUsagePlan: PER_API
           Throttle:
-            BurstLimit: 5
+            BurstLimit: 10
             RateLimit: 10
 
   SlowFunction:

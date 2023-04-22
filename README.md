@@ -8,6 +8,15 @@ The slides for the talk are in the **slides** folder of this repo.
 
 This project implements a vanilla event driven architecture pattern as seen [here](https://serverlessland.com/patterns/apigw-lambda-eventbridge-sam-java) on the Serverless Land website.  This architecture link contains a Java implementation, the implementation here is in Python.
 
+There are 3 components to this project:
+
+1. **NotificationFunction** - this takes the payload from the API, injects a correlation_id and forwards it to EventBridge as a notify-order event.
+2. **DeliveryFunction** - This is a simple function which takes the detail of the event, removes the meta-data from the body and sends this to the configured API endpoint.  This lambda uses the [tenacity library](https://pypi.org/project/tenacity/) for retries in the code with a wait time between 3 and 8 seconds on any failure from calling the "slow api".
+3. **SlowAPI** - This is an Api that has been setup to mimic an unstable real-world API and has been setup with the following constraints:
+
+   1. 20% of the API Calls will fail immediately.
+   2. The API will take between 0 and 2 seconds to return a response when it runs successfully.
+
 ### Project Dependencies
 
 This project uses the following open source tools and requires them to be installed and working in your environment:
@@ -65,10 +74,10 @@ Each sub-folder represents one of the Serverless Services in the SAM template.  
 
 ### Project Features
 
-This project includes a **package.json** file that will install **artillery** as a dev dependency.  Artillery is used to run the performance tests over approx. 33 minutes to drive too much traffic into the service for it to fail as demonstrated in the talk at Melbourne Serverless (slide 18).
+This project includes a **package.json** file that will install **artillery** as a dev dependency.  Artillery is used to run the performance tests over approx. 18 minutes to drive too much traffic into the service for it to fail as demonstrated in the talk at Melbourne Serverless (slide 18).
 
-Once the stack is deployed and initial manual configuration is completed the performance test can be executed using **npx artillery run notify-perf-test.yml**.
+Once the stack is deployed and the initial manual configuration is completed the performance test can be executed using **npx artillery run notify-perf-test.yml**.
 
 ### AWS BILL WARNING !!!
 
-The performance test will run over 33 minutes and will cause your AWS account to accrue charges of approximately $10.00 USD for each performance run.
+The performance test will run over 18 minutes and may cause your AWS account to accrue charges, this is unlikely but please be aware running performance tests with AWS Lambda may cost $$$.

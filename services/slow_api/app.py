@@ -20,15 +20,15 @@ def slowHandler():
 
         logger.info({"status": "START", "message": "Slow processing..."})
 
-        # Process the Data
-        timeout: int = random.randint(1, 10)
-        logger.info({"message": f"slow response, waiting {timeout} seconds"})
-        time.sleep(timeout)
-
         # randomly raise an Exception to fail the process 20% of the time
         random_fail = random.randint(0, 100)
         if random_fail > 80:
             raise Exception("random process failure")
+
+        # Process the Data
+        timeout: int = random.randint(1, 10)
+        logger.info({"message": f"slow response, waiting {timeout} seconds"})
+        time.sleep(timeout)
 
         logger.info({"status": "COMPLETE"})
 
