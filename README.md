@@ -6,12 +6,12 @@ The slides for the talk are in the **slides** folder of this repo.
 
 ## About the project
 
-This project implements a vanilla event driven architecture pattern as seen [here](https://serverlessland.com/patterns/apigw-lambda-eventbridge-sam-java) on the Serverless Land website.  This architecture link contains a Java implementation, the implementation here is in Python.
+This project implements a vanilla event-driven architecture pattern as seen [here](https://serverlessland.com/patterns/apigw-lambda-eventbridge-sam-java) on the Serverless Land website.  This architecture link contains a Java implementation, the implementation here is in Python.
 
 There are 3 components to this project:
 
 1. **NotificationFunction** - this takes the payload from the API, injects a correlation_id and forwards it to EventBridge as a notify-order event.
-2. **DeliveryFunction** - This is a simple function which takes the detail of the event, removes the meta-data from the body and sends this to the configured API endpoint.  This lambda uses the [tenacity library](https://pypi.org/project/tenacity/) for retries in the code with a wait time between 3 and 8 seconds on any failure from calling the "slow api".
+2. **DeliveryFunction** - This is a simple function that takes the detail of the event, removes the meta-data from the body and sends this to the configured API endpoint.  This lambda uses the [tenacity library](https://pypi.org/project/tenacity/) for retries in the code with a wait time between 3 and 8 seconds on any failure from calling the "slow api".
 3. **SlowAPI** - This is an Api that has been setup to mimic an unstable real-world API and has been setup with the following constraints:
 
    1. 20% of the API Calls will fail immediately.
@@ -30,13 +30,13 @@ There is a configured artillery test file that can be used to run a performance 
 
 The project has 3 branches as follows:
 
-1. **main** - This is the same as the **no-flow-control** branch.
-**no-flow-control** - This is the architecture with **No Flow Control** built in.  It is an uncontrolled scale flowing into a limited-scale API to highlight what happens when scalability boundary clashes occur.
-3. **flow-control** - Same architecture but has an SQS Queue introduced between EventBridge and the Delivery Lambda with an Event Source Mapping configuration to limit the scale of the Delivery Lambda to a maximum concurrency of 10.  The Lambda receives individual messages from the SQS Queue.
+1. **[main]()** - This is the same as the **no-flow-control** branch.
+2. **[no-flow-control](https://github.com/walmsles/serverless-observability/tree/no-flow-control)** - This is the architecture with **No Flow Control** built in.  It is an uncontrolled scale flowing into a limited-scale API to highlight what happens when scalability boundary clashes occur.
+3. **[flow-control](https://github.com/walmsles/serverless-observability/tree/flow-control)** - Same architecture but has an SQS Queue introduced between EventBridge and the Delivery Lambda with an Event Source Mapping configuration to limit the scale of the Delivery Lambda to a maximum concurrency of 10.  The Lambda receives individual messages from the SQS Queue.
 
 ### Project Dependencies
 
-This project uses the following open source tools and requires them to be installed and working in your environment:
+This project uses the following open-source tools and requires them to be installed and working in your environment:
 
 - Python 3.9+ (including pip)
 - SAM Cli
@@ -83,7 +83,7 @@ Each sub-folder represents one of the Serverless Services in the SAM template.  
     - Scroll down and press **Retrieve Secret Value**
     - Click **Edit**
     - Paste in the API Key
-    - Configuration is now complete.
+    - configuration is now complete.
 
 ### Subsequent Installs
 
