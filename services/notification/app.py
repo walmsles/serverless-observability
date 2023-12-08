@@ -1,22 +1,26 @@
 import json
+import logging as logger
 import os
 
 import boto3
-from aws_lambda_powertools.logging import Logger, correlation_paths
+
+# from aws_lambda_powertools.logging import Logger, correlation_paths
 from aws_lambda_powertools.utilities.data_classes import (
     APIGatewayProxyEvent,
     event_source,
 )
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
-logger = Logger(service="notify-handler")
+logger.basicConfig(level=logger.INFO)
+
+# logger = Logger(service="notify-handler")
 client = boto3.client("events")
 EVENTBUS_NAME = os.environ.get("EVENTBUS_NAME", "")
 
 
-@logger.inject_lambda_context(
-    log_event=True, correlation_id_path=correlation_paths.API_GATEWAY_REST
-)
+# @logger.inject_lambda_context(
+#     log_event=True, correlation_id_path=correlation_paths.API_GATEWAY_REST
+# )
 @event_source(data_class=APIGatewayProxyEvent)
 def handler(event: APIGatewayProxyEvent, context: LambdaContext):
     logger.info({"status": "START", "message": "Processing Order Notification"})

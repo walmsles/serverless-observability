@@ -1,11 +1,13 @@
+import logging as logger
 import random
 import time
 
-from aws_lambda_powertools import Logger
+# from aws_lambda_powertools import Logger
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
-logger = Logger(service="slow-api")
+logger.basicConfig(level=logger.INFO)
+# logger = Logger(service="slow-api")
 app = APIGatewayRestResolver()
 
 
@@ -40,6 +42,6 @@ def slowHandler():
         raise error
 
 
-@logger.inject_lambda_context(log_event=True)
+# @logger.inject_lambda_context(log_event=True)
 def handler(event, context: LambdaContext):
     return app.resolve(event, context)

@@ -1,14 +1,18 @@
+import logging as logger
 from typing import Any, Dict
 
 import requests
-from aws_lambda_powertools.logging import Logger
+
+# from aws_lambda_powertools.logging import Logger
 from aws_lambda_powertools.utilities import parameters
 from aws_lambda_powertools.utilities.data_classes import EventBridgeEvent, event_source
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.config import Config
 from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
 
-logger = Logger(service="delivery-handler")
+# logger = Logger(service="delivery-handler")
+logger.basicConfig(level=logger.INFO)
+
 config = Config(
     region_name="ap-southeast-2",
     connect_timeout=1,
@@ -39,9 +43,9 @@ def try_api_delivery(
     return response.json()
 
 
-@logger.inject_lambda_context(
-    log_event=True, correlation_id_path="detail.meta_data.correlation_id"
-)
+# @logger.inject_lambda_context(
+#     log_event=True, correlation_id_path="detail.meta_data.correlation_id"
+# )
 @event_source(data_class=EventBridgeEvent)
 def handler(event: EventBridgeEvent, context: LambdaContext):
     logger.info({"status": "START", "message": "Processing Delivery Notification"})
